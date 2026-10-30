@@ -30,9 +30,11 @@ const (
 )
 
 type LoginInput struct {
-	Email    string
-	Password string
-	AuthCode string
+	SecurityKey            bool
+	SecurityKeyInteraction *SecurityKeyInteraction
+	Email                  string
+	Password               string
+	AuthCode               string
 	// Endpoint is deprecated. Login always uses the SAP configuration from
 	// Apple's current bag so unsigned or caller-selected fallbacks are impossible.
 	Endpoint string
@@ -43,6 +45,9 @@ type LoginOutput struct {
 }
 
 func (t *appstore) Login(input LoginInput) (LoginOutput, error) {
+	if input.SecurityKey {
+		return t.loginSecurityKey(input)
+	}
 	authCode, err := normalizeAuthCode(input.AuthCode)
 	if err != nil {
 		return LoginOutput{}, err
@@ -58,7 +63,7 @@ func (t *appstore) Login(input LoginInput) (LoginOutput, error) {
 		return LoginOutput{}, err
 	}
 
-	bag, err := t.bag(guid)
+	bag, err := t.bag(context.Background(), guid)
 	if err != nil {
 		return LoginOutput{}, fmt.Errorf("failed to get bag: %w", err)
 	}
@@ -67,7 +72,7 @@ func (t *appstore) Login(input LoginInput) (LoginOutput, error) {
 		return LoginOutput{}, errors.New("SAP action signer is not configured")
 	}
 
-	signer, err := t.actionSignerFactory(bag.SAPConfig, machineID)
+	signer, err := t.actionSignerFactory(context.Background(), bag.SAPConfig, machineID)
 	if err != nil {
 		return LoginOutput{}, fmt.Errorf("failed to initialize SAP action signer: %w", err)
 	}

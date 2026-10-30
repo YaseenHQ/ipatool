@@ -1,6 +1,7 @@
 package appstore
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,7 +48,7 @@ var _ = Describe("AppStore (Login)", func() {
 			bagClient:      mockBagClient,
 			machine:        mockMachine,
 			authRetrySleep: func(time.Duration) {},
-			actionSignerFactory: func(config SAPConfig, machineID []byte) (ActionSigner, error) {
+			actionSignerFactory: func(_ context.Context, config SAPConfig, machineID []byte) (ActionSigner, error) {
 				Expect(config).To(Equal(validSAPConfig()))
 				Expect(machineID).To(Equal([]byte{0, 0, 0, 0, 0, 0}))
 
@@ -225,7 +226,7 @@ var _ = Describe("AppStore (Login)", func() {
 
 		When("the SAP signer fails to initialize", func() {
 			BeforeEach(func() {
-				as.actionSignerFactory = func(SAPConfig, []byte) (ActionSigner, error) {
+				as.actionSignerFactory = func(context.Context, SAPConfig, []byte) (ActionSigner, error) {
 					return nil, errors.New("signer error")
 				}
 			})

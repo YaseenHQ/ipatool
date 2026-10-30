@@ -534,6 +534,26 @@ func (r *Runtime) networkMessage(receiver uint64, class, selector string, meta b
 		u := object.Value.(*url.URL)
 
 		switch selector {
+		case "setQuery:":
+			value := r.String(r.arg(2))
+
+			var encoded strings.Builder
+
+			for i := 0; i < len(value); i++ {
+				c := value[i]
+				if c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || strings.ContainsRune("-._~!$&'()*+,;=:@/?", rune(c)) {
+					encoded.WriteByte(c)
+				} else {
+					fmt.Fprintf(&encoded, "%%%02X", c)
+				}
+			}
+
+			u.RawQuery = encoded.String()
+			// Foundation distinguishes nil (no query) from an empty query string.
+			u.ForceQuery = r.arg(2) != 0 && value == ""
+			r.set(0)
+
+			return true
 		case "query", "percentEncodedQuery":
 			if u.RawQuery == "" && !u.ForceQuery {
 				r.set(0)

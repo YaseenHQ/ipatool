@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 
@@ -125,4 +126,34 @@ var _ = Describe("Missing profile snapshots", func() {
 		_, err = guest.engine.MemRead(missing, 8)
 		Expect(err).To(MatchError(ContainSubstring("missing Store profile page")))
 	})
+})
+
+var _ = Describe("URL components query mutation", func() {
+	DescribeTable("matches Foundation setQuery semantics", func(query string, remove bool, expected string) {
+		ctx := context.Background()
+		bundle, err := assets.Load(ctx)
+		Expect(err).NotTo(HaveOccurred())
+		prepared, err := profile.Load(ctx)
+		Expect(err).NotTo(HaveOccurred())
+		guest, err := open(ctx, bundle.AppleMediaServices, prepared, true)
+		Expect(err).NotTo(HaveOccurred())
+		DeferCleanup(guest.Close)
+		parsed, err := url.Parse("https://example.test/a?old=1#f")
+		Expect(err).NotTo(HaveOccurred())
+		components := guest.New("NSURLComponents", parsed)
+		var arg uint64
+		if !remove {
+			arg = guest.New("NSString", query)
+		}
+		_, err = guest.Invoke(components, "setQuery:", arg)
+		Expect(err).NotTo(HaveOccurred())
+		result, err := guest.Invoke(components, "URL")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(guest.String(result)).To(Equal(expected))
+	},
+		Entry("nil removes query", "", true, "https://example.test/a#f"),
+		Entry("empty retains delimiter", "", false, "https://example.test/a?#f"),
+		Entry("reserved and percent characters", "a=b c&x=1+2%20#[]/?;:@!$()*", false, "https://example.test/a?a=b%20c&x=1+2%2520%23%5B%5D/?;:@!$()*#f"),
+		Entry("UTF8 bytes", "\u5b57=\u503c", false, "https://example.test/a?%E5%AD%97=%E5%80%BC#f"),
+	)
 })
