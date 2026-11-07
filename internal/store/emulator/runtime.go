@@ -101,8 +101,8 @@ func open(ctx context.Context, imageData []byte, prepared storeprofile.Data, str
 		return nil, fmt.Errorf("prepare store runtime: %w", err)
 	}
 
-	if fmt.Sprintf("%x", sha256.Sum256(imageData)) != "95f4558aa2c0ccd9f96ed479e336b630b46bf4b4e0baabc1c1ac8c7d55e21ab4" {
-		return nil, errors.New("AppleMediaServices does not match the pinned 26A434 image")
+	if fmt.Sprintf("%x", sha256.Sum256(imageData)) != "e99e29bfbc699f6440d057679d58eda6ef1ad1021a23564df1c6fcc2b1261b62" {
+		return nil, errors.New("AppleMediaServices does not match the pinned 26C5035r image")
 	}
 
 	metadata, err := cachedMetadata.load(ctx, prepared.Metadata)
@@ -115,12 +115,12 @@ func open(ctx context.Context, imageData []byte, prepared storeprofile.Data, str
 	imageInputs := map[string][]byte{"AppleMediaServices": imageData}
 
 	if profile.PluginUUID != "" {
-		if profile.PluginUUID != "B8C07F94-4868-3CD7-A59A-F01E8C24C1B7" {
+		if profile.PluginUUID != "90000BC8-171B-33D7-AB53-5E9338B18DBC" {
 			return nil, errors.New("unsupported authentication plugin UUID")
 		}
 
 		plugin := prepared.Plugin
-		if fmt.Sprintf("%x", sha256.Sum256(plugin)) != "e33fff05a6e6593dd91e33fd103b5d3068b62a787c680df33b859f19b3acc4ea" {
+		if fmt.Sprintf("%x", sha256.Sum256(plugin)) != "de26f67db64cc18c290eb524131325469c5bdb23421664958afa4d55ad017d79" {
 			return nil, errors.New("authentication plugin does not match the pinned image")
 		}
 

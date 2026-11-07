@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	macOSVersion        = "27.0.1"
-	macOSBuild          = "26A434"
-	macOSRestoreURL     = "https://updates.cdn-apple.com/2026FallFCS/59241290-5d51-4ca8-9df4-31624b9a4eac/UniversalMac_27.0.1_26A434_Restore.ipsw"
-	assetCacheDirectory = "apple-assets-macos-27-26A434-arm64-v1"
+	macOSVersion        = "27.3"
+	macOSBuild          = "26C5035r"
+	macOSRestoreURL     = "https://updates.cdn-apple.com/2026FallFCS/59241290-5d51-4ca8-9df4-31624b9a4eac/UniversalMac_27.0.1_26A434_Restore.ipsw" // unused when the local asset cache is pre-seeded
+	assetCacheDirectory = "apple-assets-macos-27-26C5035r-arm64-v1"
 )
 
 type Bundle struct {
@@ -35,18 +35,18 @@ type fileSpec struct {
 var requiredFiles = []fileSpec{
 	{
 		name:   "AppleMediaServices",
-		size:   14813888,
-		digest: mustDigest("95f4558aa2c0ccd9f96ed479e336b630b46bf4b4e0baabc1c1ac8c7d55e21ab4"),
+		size:   15191040,
+		digest: mustDigest("e99e29bfbc699f6440d057679d58eda6ef1ad1021a23564df1c6fcc2b1261b62"),
 	},
 	{
 		name:   "commerce",
-		size:   8092640,
-		digest: mustDigest("76de40a4a32f691947cb926ce3b128d2fc446f7cac9755f831c406cf5a316ac9"),
+		size:   8092752,
+		digest: mustDigest("6cff5d4e5f84525d07c2e55e73a66823420a87111366d714aa9d510ca38e37b2"),
 	},
 	{
 		name:   "CoreFP",
-		size:   94842464,
-		digest: mustDigest("2c30fa2b5f695fd66c0360dce72f54757d03ddb7107549715c12cb359a003b46"),
+		size:   95235760,
+		digest: mustDigest("94e00fac067f28543a969b14f1d463e623e624b32cae1a9367e14131e64f99cb"),
 	},
 	{
 		name:   "CoreFP.icxs",

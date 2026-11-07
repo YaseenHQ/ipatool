@@ -75,13 +75,13 @@ func prepareMetadata(raw []byte) (*runtimeMetadata, error) {
 		return nil, fmt.Errorf("decode Store metadata: %w", err)
 	}
 
-	if profile.UUID != "5DFC37A5-4689-3F9D-9655-D4774E1D8D08" {
+	if profile.UUID != "475AB715-9F47-37FC-B7E6-723FE441D5C3" {
 		return nil, errors.New("unsupported Store profile UUID")
 	}
 
 	// Pinned dyld lazy-import thunk, verified against its resolved import slot
-	// (0x1eaaee178). This is a host diagnostics preference, not Store logic.
-	profile.Calls = append(profile.Calls, Call{Address: 0x1a2d0fb94, Symbol: "CRIsAutoSubmitEnabled"})
+	// (27.3 shared cache). This is a host diagnostics preference, not Store logic.
+	profile.Calls = append(profile.Calls, Call{Address: 0x195e750c8, Symbol: "CRIsAutoSubmitEnabled"})
 	m := &runtimeMetadata{profile: profile, classes: map[string]*Class{}, classNames: map[uint64]string{}, methods: map[string]uint64{}, calls: map[uint64]Call{}, selectors: map[uint64]string{}, selectorAddresses: map[string]uint64{}, objects: map[uint64]Object{}, entries: map[uint64]string{}}
 
 	for i := range m.profile.Classes {

@@ -48,7 +48,7 @@ func newSource(ctx context.Context, cache *assets.StoreCache) (*source, error) {
 	if s.images[amsImage].UUID().String() != FrameworkUUID || s.images[authImage].UUID().String() != PluginUUID {
 		s.close()
 
-		return nil, fmt.Errorf("store images do not match pinned macOS 26A434")
+		return nil, fmt.Errorf("store images do not match pinned macOS 26C5035r")
 	}
 
 	objc := s.images["/usr/lib/libobjc.A.dylib"]

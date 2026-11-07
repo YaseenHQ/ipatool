@@ -142,9 +142,9 @@ func (r *Runtime) symbol(name string) {
 
 		switch key {
 		case "BuildVersion":
-			value = "26A434"
+			value = "26C5035r"
 		case "ProductVersion":
-			value = "27.0.1"
+			value = "27.3"
 		case "DeviceClass":
 			value = "Mac"
 		case "ProductType":
@@ -607,6 +607,12 @@ func (r *Runtime) symbol(name string) {
 		r.set(r.New("HostOSLog", nil))
 	case "os_signpost_enabled", "os_log_type_enabled", "os_variant_has_internal_content":
 		r.set(0)
+	case "os_signpost_id_make_with_pointer", "os_signpost_id_generate", "os_signpost_id_null", "os_signpost_bucket_id":
+		// Signpost IDs are only used for telemetry; a null ID disables it.
+		r.set(0)
+	case "os_signpost_post", "os_signpost_interval_begin", "os_signpost_interval_end", "os_signpost_interval_disable":
+		// Telemetry emission is a no-op in the isolated runtime.
+		return
 	case "malloc_size":
 		r.set(r.allocations[r.arg(0)])
 	case "malloc", "calloc", "malloc_type_malloc", "malloc_type_calloc":
@@ -1151,10 +1157,10 @@ func (r *Runtime) message(receiver uint64, selector string, super bool) {
 	case "operatingSystemVersion":
 		out, _ := r.engine.RegRead(unicorn.RegX0 + 8)
 		r.write64(out, 27)
-		r.write64(out+8, 0)
-		r.write64(out+16, 1)
+		r.write64(out+8, 3)
+		r.write64(out+16, 0)
 	case "operatingSystemVersionString":
-		r.set(r.New("NSString", "Version 27.0.1 (Build 26A434)"))
+		r.set(r.New("NSString", "Version 27.3 (Build 26C5035r)"))
 	case "initWithTimeIntervalSince1970:":
 		if class != "NSDate" {
 			panic("unsupported date initializer")
