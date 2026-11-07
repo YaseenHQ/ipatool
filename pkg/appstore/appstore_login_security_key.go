@@ -21,13 +21,16 @@ import (
 	"howett.net/plist"
 )
 
-var ErrSecurityKeyLoginRequired = errors.New("security-key session requires interactive login; run 'ipatool auth login --security-key --anisette-url <URL>'")
+var ErrSecurityKeyLoginRequired = errors.New("this session requires interactive login; run 'ipatool auth login --security-key --anisette-url <URL>' or 'ipatool auth login --gsa-code --anisette-url <URL>'")
 
 type SecurityKeyInteraction struct {
 	AnisetteURL string
 	Context     context.Context
 	PIN         func(context.Context) (string, error)
-	Status      func(string)
+	// Code reads the trusted-device verification code. It is used instead of the
+	// security key when LoginInput.TrustedDeviceCode is set.
+	Code   func(context.Context) (string, error)
+	Status func(string)
 }
 
 func (t *appstore) loginSecurityKey(input LoginInput) (LoginOutput, error) {
@@ -59,8 +62,12 @@ func (t *appstore) loginSecurityKey(input LoginInput) (LoginOutput, error) {
 		}
 	}
 
-	if err := securitykey.CheckSupport(); err != nil {
-		return LoginOutput{}, fmt.Errorf("check security-key support: %w", err)
+	if input.SecurityKey {
+		if err := securitykey.CheckSupport(); err != nil {
+			return LoginOutput{}, fmt.Errorf("check security-key support: %w", err)
+		}
+	} else if interaction.Code == nil {
+		return LoginOutput{}, ErrSecurityKeyLoginRequired
 	}
 
 	status("security-key: fetching anisette headers from service")
@@ -89,9 +96,16 @@ func (t *appstore) loginSecurityKey(input LoginInput) (LoginOutput, error) {
 	var challenge *securitykey.GrandSlamChallenge
 
 	if errors.As(err, &challenge) {
-		err = gsa.VerifySecurityKey(ctx, challenge, securitykey.Interaction{PIN: interaction.PIN, Status: interaction.Status})
-		if err != nil {
-			return LoginOutput{}, fmt.Errorf("security-key verification: %w", err)
+		if input.SecurityKey {
+			err = gsa.VerifySecurityKey(ctx, challenge, securitykey.Interaction{PIN: interaction.PIN, Status: interaction.Status})
+			if err != nil {
+				return LoginOutput{}, fmt.Errorf("security-key verification: %w", err)
+			}
+		} else {
+			err = gsa.VerifyTrustedDeviceCode(ctx, challenge, securitykey.CodeInteraction{Code: interaction.Code, Status: interaction.Status})
+			if err != nil {
+				return LoginOutput{}, fmt.Errorf("trusted-device verification: %w", err)
+			}
 		}
 		// Anisette OTPs are short-lived; regenerate after the user's touch/PIN.
 		headers, err = securitykey.Headers(ctx, interaction.AnisetteURL)

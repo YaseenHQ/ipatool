@@ -28,6 +28,24 @@ commands. The password, PET and PIN are not saved.
 For an existing local anisette-v1 service, replace the URL with
 `http://127.0.0.1:6969` (or its configured loopback address and port).
 
+## Code-based login (`--gsa-code`)
+
+Accounts that verify with a 6-digit code on a trusted device can use the same
+GrandSlam flow without a hardware key:
+
+```sh
+CGO_ENABLED=1 go build -o /tmp/ipatool-gsa .
+/tmp/ipatool-gsa auth login --gsa-code --anisette-url https://ani.sidestore.io --email you@example.com
+```
+
+Enter your password at the hidden prompt. If Apple requires secondary
+authentication it shows a code on your trusted devices; type it when asked. A
+rejected code is never retried automatically. SMS verification is not
+implemented, and this mode needs no libfido2. The code endpoints follow public
+GrandSlam reference implementations and have only been exercised against mocks
+and a made-up account, not a real one. Like security-key sessions, expired
+sessions require another interactive login.
+
 ## Troubleshooting
 
 - **Service URL rejected:** use HTTPS, or HTTP on `127.0.0.1` or `[::1]`.

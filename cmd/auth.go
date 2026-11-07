@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -28,24 +29,28 @@ func authCmd() *cobra.Command {
 func loginCmd() *cobra.Command {
 	var email, password, authCode, anisetteURL string
 
-	var securityKey bool
+	var securityKey, gsaCode bool
 
 	cmd := &cobra.Command{
 		Use:   "login",
 		Short: "Login to the App Store",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			interactive := cmd.Context().Value(interactiveKey).(bool)
-			if anisetteURL != "" && !securityKey {
-				return errors.New("--anisette-url requires --security-key")
+			if securityKey && gsaCode {
+				return errors.New("--security-key and --gsa-code are mutually exclusive")
 			}
-			if securityKey && !interactive {
-				return errors.New("security-key login requires interactive mode")
+			gsa := securityKey || gsaCode
+			if anisetteURL != "" && !gsa {
+				return errors.New("--anisette-url requires --security-key or --gsa-code")
 			}
-			if securityKey && authCode != "" {
-				return errors.New("--security-key and --auth-code are mutually exclusive")
+			if gsa && !interactive {
+				return errors.New("security-key and --gsa-code login require interactive mode")
 			}
-			if securityKey && anisetteURL == "" {
-				return errors.New("security-key login requires --anisette-url")
+			if gsa && authCode != "" {
+				return errors.New("--auth-code cannot be combined with --security-key or --gsa-code; the code is requested during login")
+			}
+			if gsa && anisetteURL == "" {
+				return errors.New("--security-key and --gsa-code login require --anisette-url")
 			}
 
 			if email == "" && !interactive {
@@ -75,14 +80,20 @@ func loginCmd() *cobra.Command {
 			dependencies.Logger.Log().Msg("preparing authentication; the first login may take a few minutes")
 
 			var interaction *appstore.SecurityKeyInteraction
-			if securityKey {
+			if gsa {
 				ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 				defer cancel()
 				interaction = &appstore.SecurityKeyInteraction{
 					AnisetteURL: anisetteURL,
 					Context:     ctx,
-					PIN:         readPIN,
 					Status:      func(message string) { dependencies.Logger.Log().Msg(message) },
+				}
+				if securityKey {
+					interaction.PIN = readPIN
+				} else {
+					interaction.Code = func(context.Context) (string, error) {
+						return readPrompt("enter the verification code shown on your trusted device: ", false)
+					}
 				}
 			}
 			var lastErr error
@@ -104,6 +115,7 @@ func loginCmd() *cobra.Command {
 
 				output, err := dependencies.AppStore.Login(appstore.LoginInput{
 					SecurityKey:            securityKey,
+					TrustedDeviceCode:      gsaCode,
 					SecurityKeyInteraction: interaction,
 					Email:                  email,
 					Password:               password,
@@ -142,7 +154,8 @@ func loginCmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&email, "email", "e", "", "Apple ID email address or phone number (required)")
 	cmd.Flags().StringVarP(&password, "password", "p", "", "password for the Apple ID (required)")
-	cmd.Flags().StringVar(&anisetteURL, "anisette-url", "", "anisette-v1 service URL (HTTPS or local HTTP) (required with --security-key)")
+	cmd.Flags().StringVar(&anisetteURL, "anisette-url", "", "anisette-v1 service URL (HTTPS or local HTTP) (required with --security-key or --gsa-code)")
+	cmd.Flags().BoolVar(&gsaCode, "gsa-code", false, "experimental GrandSlam login verified by a code shown on a trusted device")
 	cmd.Flags().BoolVar(&securityKey, "security-key", false, "experimental physical security-key login (macOS, USB, libfido2)")
 	cmd.Flags().StringVar(&authCode, "auth-code", "", "2FA code for the Apple ID")
 

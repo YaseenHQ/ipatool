@@ -30,7 +30,10 @@ const (
 )
 
 type LoginInput struct {
-	SecurityKey            bool
+	SecurityKey bool
+	// TrustedDeviceCode selects GrandSlam login verified by a code shown on the
+	// account's trusted devices instead of a hardware security key.
+	TrustedDeviceCode      bool
 	SecurityKeyInteraction *SecurityKeyInteraction
 	Email                  string
 	Password               string
@@ -45,7 +48,7 @@ type LoginOutput struct {
 }
 
 func (t *appstore) Login(input LoginInput) (LoginOutput, error) {
-	if input.SecurityKey {
+	if input.SecurityKey || input.TrustedDeviceCode {
 		return t.loginSecurityKey(input)
 	}
 	authCode, err := normalizeAuthCode(input.AuthCode)
