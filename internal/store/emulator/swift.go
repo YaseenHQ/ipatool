@@ -536,6 +536,13 @@ func (r *Runtime) swiftSymbol(name string) bool {
 		r.write64(object, metadata)
 		r.write64(object+8, 3) // inline refcount: one strong reference, live object
 		r.set(object)
+	case "swift_initStackObject":
+		// Stack-allocated objects get the same header as heap objects; the
+		// caller owns the storage, so only the header is initialized here.
+		metadata, object := r.arg(0), r.arg(1)
+		r.write64(object, metadata)
+		r.write64(object+8, 3) // inline refcount: one strong reference, live object
+		r.set(object)
 	case "swift_getForeignTypeMetadata":
 		candidate := r.arg(1)
 		if value := r.profile.SwiftForeign[strconv.FormatUint(candidate, 10)]; value != 0 {

@@ -31,4 +31,9 @@ var macOS27SharedCacheFunctions = map[uint64]string{
 	0x00000001855dbb40: "_strlen",
 }
 
-var macOS27SharedCacheSlots = map[uint64]string{}
+// macOS27SharedCacheSlots lists GOT entries in the 27.3 AppleMediaServices
+// __got section that the extracted image leaves unbound. The loader fills them
+// with the resolved symbol. Found via the indirect symbol table (cmd/findslots).
+var macOS27SharedCacheSlots = map[uint64]string{
+	0x00000001e01cbd68: "___stack_chk_guard",
+}
